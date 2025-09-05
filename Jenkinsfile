@@ -33,11 +33,17 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([file(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_FILE')]) {
+                withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_CONTENT')]) {
                     sh '''
-                    export KUBECONFIG=$KUBECONFIG_FILE
+                    # Write Secret Text to temporary kubeconfig file
+                    echo "$KUBECONFIG_CONTENT" > kubeconfig
+                    export KUBECONFIG=$(pwd)/kubeconfig
+
+                    # Apply Kubernetes manifests
                     kubectl apply -f k8s/deployment.yaml
                     kubectl apply -f k8s/service.yaml
+
+                    # Verify deployment
                     kubectl get pods
                     kubectl get svc
                     '''
