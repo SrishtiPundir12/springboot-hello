@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_USER = 'srishtipundir'
-        DOCKER_PASS = credentials('dockerhub')   // <-- updated to match your Jenkins credential ID
+        DOCKER_PASS = credentials('dockerhub')   // Docker Hub token ID in Jenkins
     }
 
     stages {
@@ -15,23 +15,18 @@ pipeline {
             }
         }
 
-        stage('Docker Login') {
-            steps {
-                sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-            }
-        }
-
         stage('Build (Maven)') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
         }
 
-        stage('Build & Push Docker Image') {
+        stage('Docker Build & Push') {
             steps {
                 sh '''
-                docker build -t srishtipundir/springboot-hello:latest .
-                docker push srishtipundir/springboot-hello:latest
+                echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                docker build -t $DOCKER_USER/springboot-hello:latest .
+                docker push $DOCKER_USER/springboot-hello:latest
                 '''
             }
         }
@@ -53,7 +48,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completed: App deployed to Kind Kubernetes!"
+            echo "✅ Pipeline completed successfully: App deployed to Kind Kubernetes!"
         }
         failure {
             echo "❌ Pipeline failed, check logs!"
