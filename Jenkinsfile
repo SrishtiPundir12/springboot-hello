@@ -38,9 +38,12 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    # Deploy using SA token and skip TLS verification
+                    # Deploy both Deployment and Service
                     kubectl --server=$K8S_API_SERVER --token=$K8S_TOKEN --insecure-skip-tls-verify apply -f k8s/deployment.yaml
+                    kubectl --server=$K8S_API_SERVER --token=$K8S_TOKEN --insecure-skip-tls-verify apply -f k8s/service.yaml
+                    # Check pods and services
                     kubectl --server=$K8S_API_SERVER --token=$K8S_TOKEN --insecure-skip-tls-verify get pods
+                    kubectl --server=$K8S_API_SERVER --token=$K8S_TOKEN --insecure-skip-tls-verify get svc
                 '''
             }
         }
