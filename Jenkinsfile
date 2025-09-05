@@ -6,10 +6,13 @@ pipeline {
     }
     stages {
         stage('Checkout') {
-            steps {
-                git url: 'https://github.com/SrishtiPundir12/springboot-hello.git', branch: 'main'
-            }
-        }
+    steps {
+        git branch: 'main', 
+            url: 'https://github.com/SrishtiPundir12/springboot-hello.git',
+            credentialsId: 'github-pat'
+    }
+}
+
         stage('Build (Maven)') {
             steps {
                 sh 'mvn clean package -DskipTests'
