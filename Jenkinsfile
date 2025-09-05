@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         DOCKER_USER = 'srishtipundir'
-        DOCKER_PASS = credentials('dockerhub')   // Docker Hub token ID in Jenkins
+        DOCKER_PASS = credentials('dockerhub')      // Docker Hub token ID in Jenkins
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', 
+                git branch: 'main',
                     url: 'https://github.com/SrishtiPundir12/springboot-hello.git',
                     credentialsId: 'github-pat'
             }
@@ -35,8 +35,8 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_CONTENT')]) {
                     sh '''
-                    # Write kubeconfig Secret Text to file while preserving line breaks
-                    printf "%s" "$KUBECONFIG_CONTENT" > kubeconfig
+                    # Write kubeconfig preserving line breaks
+                    echo "$KUBECONFIG_CONTENT" | sed 's/\\\\n/\\n/g' > kubeconfig
                     export KUBECONFIG=$(pwd)/kubeconfig
 
                     # Apply Kubernetes manifests
