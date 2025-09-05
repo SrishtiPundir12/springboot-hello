@@ -31,23 +31,22 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_RAW')]) {
-                    sh '''
-                    # Secret text ko temporary file me convert karo
-                    echo "$KUBECONFIG_RAW" > kubeconfig
-                    chmod 600 kubeconfig
-                    
-                    # Apply Kubernetes manifests
-                    kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
-                    kubectl --kubeconfig=kubeconfig apply -f k8s/service.yaml
-                    kubectl --kubeconfig=kubeconfig get pods
-                    kubectl --kubeconfig=kubeconfig get svc
-                    '''
-                }
-            }
+       stage('Deploy to Kubernetes') {
+    steps {
+        withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_B64')]) {
+            sh '''
+            # Decode base64 secret to kubeconfig file in workspace
+            echo "$KUBECONFIG_B64" | base64 --decode > kubeconfig
+            chmod 600 kubeconfig
+            
+            # Use kubeconfig to deploy
+            kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
+            kubectl --kubeconfig=kubeconfig get pods
+            '''
         }
+    }
+}
+
     }
 
     post {
