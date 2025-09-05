@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_USER = 'srishtipundir'
         DOCKER_PASS = credentials('dockerhub') // Docker Hub token ID in Jenkins
+        KUBECONFIG_PATH = '/home/ubuntu/kubeconfig' // Full path to kubeconfig on Jenkins agent
     }
 
     stages {
@@ -33,20 +34,13 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_CONTENT')]) {
-                    sh '''
-                    # Convert escaped newlines to real newlines
-                    printf "%b" "$KUBECONFIG_CONTENT" > kubeconfig
-                    export KUBECONFIG=$(pwd)/kubeconfig
-
-                    # Deploy
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
-
-                    kubectl get pods
-                    kubectl get svc
-                    '''
-                }
+                sh """
+                export KUBECONFIG=$KUBECONFIG_PATH
+                kubectl apply -f k8s/deployment.yaml
+                kubectl apply -f k8s/service.yaml
+                kubectl get pods
+                kubectl get svc
+                """
             }
         }
     }
