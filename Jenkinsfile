@@ -24,6 +24,7 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 sh '''
+                set -e
                 echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                 docker build -t $DOCKER_USER/springboot-hello:latest .
                 docker push $DOCKER_USER/springboot-hello:latest
@@ -31,22 +32,19 @@ pipeline {
             }
         }
 
-       stage('Deploy to Kubernetes') {
-    steps {
-        withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_B64')]) {
-            sh '''
-            # Decode base64 secret to kubeconfig file in workspace
-            echo "$KUBECONFIG_B64" | base64 --decode > kubeconfig
-            chmod 600 kubeconfig
-            
-            # Use kubeconfig to deploy
-            kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
-            kubectl --kubeconfig=kubeconfig get pods
-            '''
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_B64')]) {
+                    sh '''
+                    set -e
+                    echo "$KUBECONFIG_B64" | base64 --decode > kubeconfig
+                    chmod 600 kubeconfig
+                    kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
+                    kubectl --kubeconfig=kubeconfig get pods
+                    '''
+                }
+            }
         }
-    }
-}
-
     }
 
     post {
