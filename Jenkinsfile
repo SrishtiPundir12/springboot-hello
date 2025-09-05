@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_USER = 'srishtipundir'
-        DOCKER_PASS = credentials('dockerhub')  // Docker Hub token ID in Jenkins
+        DOCKER_PASS = credentials('dockerhub')   // Docker Hub token ID in Jenkins
     }
 
     stages {
@@ -33,21 +33,17 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_CONTENT')]) {
+                withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_RAW')]) {
                     sh '''
-                    # Write kubeconfig to a temporary file
-                    echo "$KUBECONFIG_CONTENT" > kubeconfig_raw
-
-                    # Flatten and minify kubeconfig to avoid parsing errors
-                    kubectl --kubeconfig=kubeconfig_raw config view --flatten --minify > kubeconfig
-
-                    export KUBECONFIG=$PWD/kubeconfig
-
+                    # Secret text ko temporary file me convert karo
+                    echo "$KUBECONFIG_RAW" > kubeconfig
+                    chmod 600 kubeconfig
+                    
                     # Apply Kubernetes manifests
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
-                    kubectl get pods
-                    kubectl get svc
+                    kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
+                    kubectl --kubeconfig=kubeconfig apply -f k8s/service.yaml
+                    kubectl --kubeconfig=kubeconfig get pods
+                    kubectl --kubeconfig=kubeconfig get svc
                     '''
                 }
             }
