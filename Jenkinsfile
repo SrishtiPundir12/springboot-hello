@@ -3,7 +3,9 @@ pipeline {
 
     environment {
         DOCKER_USER = 'srishtipundir'
-        DOCKER_PASS = credentials('dockerhub')   // Docker Hub token ID in Jenkins
+        DOCKER_PASS = credentials('dockerhub')        // Docker Hub token
+        K8S_TOKEN   = credentials('jenkins-sa-token') // ServiceAccount token stored as Secret Text
+        K8S_API_SERVER = credentials('k8s-api-server') // API server URL stored as Secret Text
     }
 
     stages {
@@ -34,15 +36,12 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_B64')]) {
-                    sh '''
-                    set -e
-                    echo "$KUBECONFIG_B64" | base64 --decode > kubeconfig
-                    chmod 600 kubeconfig
-                    kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
-                    kubectl --kubeconfig=kubeconfig get pods
-                    '''
-                }
+                sh '''
+                set -e
+                # Deploy using token and API server directly
+                kubectl --server=$K8S_API_SERVER --token=$K8S_TOKEN apply -f k8s/deployment.yaml
+                kubectl --server=$K8S_API_SERVER --token=$K8S_TOKEN get pods
+                '''
             }
         }
     }
