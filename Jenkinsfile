@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         DOCKER_USER = 'srishtipundir'
-        DOCKER_PASS = credentials('dockerhub')      // Docker Hub token ID in Jenkins
+        DOCKER_PASS = credentials('dockerhub') // Docker Hub token ID in Jenkins
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
+                git branch: 'main', 
                     url: 'https://github.com/SrishtiPundir12/springboot-hello.git',
                     credentialsId: 'github-pat'
             }
@@ -35,15 +35,14 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'kubeconfig-content', variable: 'KUBECONFIG_CONTENT')]) {
                     sh '''
-                    # Write kubeconfig preserving line breaks
-                    echo "$KUBECONFIG_CONTENT" | sed 's/\\\\n/\\n/g' > kubeconfig
+                    # Convert escaped newlines to real newlines
+                    printf "%b" "$KUBECONFIG_CONTENT" > kubeconfig
                     export KUBECONFIG=$(pwd)/kubeconfig
 
-                    # Apply Kubernetes manifests
+                    # Deploy
                     kubectl apply -f k8s/deployment.yaml
                     kubectl apply -f k8s/service.yaml
 
-                    # Verify deployment
                     kubectl get pods
                     kubectl get svc
                     '''
@@ -54,7 +53,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completed successfully: App deployed to Kind Kubernetes!"
+            echo "✅ Pipeline completed successfully: App deployed to Kubernetes!"
         }
         failure {
             echo "❌ Pipeline failed, check logs!"
