@@ -10,4 +10,4 @@ spec:
     - protocol: TCP
       port: 8080          # Cluster port
       targetPort: 8080    # Pod port
-      nodePort: 30080     # EC2 public IP se access
+      nodePort: 31000    # EC2 public IP se access
