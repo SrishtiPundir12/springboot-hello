@@ -3,9 +3,7 @@ pipeline {
 
     environment {
         DOCKER_USER = 'srishtipundir'
-        DOCKER_PASS = credentials('dockerhub')         // Docker Hub token ID
-        K8S_TOKEN = credentials('jenkins-sa-token')    // Jenkins secret text: SA token
-        K8S_API_SERVER = credentials('k8s-api-server')// Jenkins secret text: API server URL
+        DOCKER_PASS = credentials('dockerhub')   // Docker Hub token ID
     }
 
     stages {
@@ -36,15 +34,20 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh '''
-                    set -e
-                    # Deploy both Deployment and Service
-                    kubectl --server=$K8S_API_SERVER --token=$K8S_TOKEN --insecure-skip-tls-verify apply -f k8s/deployment.yaml
-                    kubectl --server=$K8S_API_SERVER --token=$K8S_TOKEN --insecure-skip-tls-verify apply -f k8s/service.yaml
-                    # Check pods and services
-                    kubectl --server=$K8S_API_SERVER --token=$K8S_TOKEN --insecure-skip-tls-verify get pods
-                    kubectl --server=$K8S_API_SERVER --token=$K8S_TOKEN --insecure-skip-tls-verify get svc
-                '''
+                withEnv(["KUBECONFIG=/var/lib/jenkins/kubeconfig"]) {
+                    sh '''
+                        set -e
+                        # Deploy both Deployment and Service
+                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply -f k8s/service.yaml
+
+                        echo "🔹 Pods Status:"
+                        kubectl get pods
+
+                        echo "🔹 Services Status:"
+                        kubectl get svc
+                    '''
+                }
             }
         }
     }
