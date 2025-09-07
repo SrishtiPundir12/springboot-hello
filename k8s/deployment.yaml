@@ -22,3 +22,10 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "dev"
+          volumeMounts:
+            - mountPath: /app/data      # container ke andar data yahan save hoga
+              name: springboot-storage
+      volumes:
+        - name: springboot-storage
+          persistentVolumeClaim:
+            claimName: springboot-pvc
