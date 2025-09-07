@@ -37,15 +37,22 @@ pipeline {
                 withEnv(["KUBECONFIG=/var/lib/jenkins/kubeconfig"]) {
                     sh '''
                         set -e
-                        # Deploy both Deployment and Service
+                        echo "🚀 Applying Kubernetes manifests..."
+
+                        # Apply PV, PVC, Deployment, and Service
+                        kubectl apply -f k8s/pv.yaml
+                        kubectl apply -f k8s/pvc.yaml
                         kubectl apply -f k8s/deployment.yaml
                         kubectl apply -f k8s/service.yaml
 
                         echo "🔹 Pods Status:"
-                        kubectl get pods
+                        kubectl get pods -o wide
 
                         echo "🔹 Services Status:"
-                        kubectl get svc
+                        kubectl get svc -o wide
+
+                        echo "🔹 PVC Status:"
+                        kubectl get pvc
                     '''
                 }
             }
@@ -54,7 +61,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completed successfully: App deployed to Kubernetes!"
+            echo "✅ Pipeline completed successfully: App deployed to Kubernetes with PV/PVC!"
         }
         failure {
             echo "❌ Pipeline failed, check logs!"
